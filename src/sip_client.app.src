@@ -1,0 +1,24 @@
+{application, sip_client,
+ [{description, "SIP client auto-caller implementation"},
+  {vsn, "0.1.0"},
+  {registered, [sip_client_sup, sip_phone, sip_phone_statem, call_scheduler]},
+  {mod, { sip_client_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    crypto,
+    sasl
+   ]},
+  {env,[
+    {source_path, "priv/source.txt"},
+    {completed_path, "priv/completed.txt"}
+  ]},
+  {modules, [sip_client_sup,
+             sip_pgone_statem,
+             sip_line,
+             sip_phone,
+             sip_utils,
+             sip_packets_generator,
+             call_scheduler]},
+  {licenses, ["MIT"]}
+ ]}.
