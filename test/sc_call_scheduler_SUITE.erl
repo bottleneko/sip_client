@@ -106,9 +106,9 @@ start_call_test(_Console) ->
   process_flag(trap_exit, true),
   ?assertEqual(#state{}, sc_call_scheduler:start_call(0, #state{})),
   Self = self(),
-  {ok, SupPid} = sc_line:start_link(),
-  meck:new(sc_phone, [passthrough]),
-  meck:expect(sc_phone, init, fun([Number]) ->
+  {ok, SupPid} = sc_line_sup:start_link(),
+  meck:new(sc_line, [passthrough]),
+  meck:expect(sc_line, init, fun([Number]) ->
                                        Self ! {ok, Number},
                                        {ok, []}
                                     end),
@@ -122,7 +122,7 @@ start_call_test(_Console) ->
   ets:delete_all_objects(Tid),
   #state{ets_tid = Tid, last_sended = '$end_of_table'} = sc_call_scheduler:start_call(1, #state{ets_tid = Tid, last_sended = undef}),
   exit(SupPid, kill),
-  meck:unload(sc_phone).
+  meck:unload(sc_line).
 
 handle_info_test(_Config) ->
   Self = self(),

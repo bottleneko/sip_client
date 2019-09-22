@@ -1,4 +1,4 @@
--module(sc_phone_statem).
+-module(sc_line_statem).
 -behaviour(gen_statem).
 
 -compile(nowarn_missing_spec).
@@ -60,7 +60,7 @@ init([#{endpoint_ip   := InterfaceAddr,
         delay         := Delay
   }]) ->
   {ok, Socket} = gen_udp:open(EndpointPort, [list, inet, {active, true}, {reuseaddr, true}, {ifaddr, InterfaceAddr}]),
-  sc_phone_statem:register_line(self()),
+  sc_line_statem:register_line(self()),
   {ok, unauthorized, #data{
     socket        = Socket,
     endpoint_ip   = InterfaceAddr,

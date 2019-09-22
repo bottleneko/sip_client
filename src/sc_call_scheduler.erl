@@ -85,7 +85,7 @@ start_call(N, State = #state{pool = Pool, ets_tid = Tid, last_sended = undef}) -
     '$end_of_table' ->
       start_call(0, State#state{last_sended = '$end_of_table'});
     Number ->
-      {ok, Pid} = supervisor:start_child(sc_line, [list_to_binary(Number)]),
+      {ok, Pid} = supervisor:start_child(sc_line_sup, [list_to_binary(Number)]),
       Ref = erlang:monitor(process, Pid),
       start_call(N -1, State#state{pool = [{Ref, Number}|Pool], last_sended = Number})
   end;
@@ -94,7 +94,7 @@ start_call(N, State = #state{pool = Pool, ets_tid = Tid, last_sended = Last}) ->
     '$end_of_table' ->
       start_call(0, State#state{last_sended = '$end_of_table'});
     Number ->
-      {ok, Pid} = supervisor:start_child(sc_line, [list_to_binary(Number)]),
+      {ok, Pid} = supervisor:start_child(sc_line_sup, [list_to_binary(Number)]),
       Ref = erlang:monitor(process, Pid),
       start_call(N-1, State#state{pool = [{Ref, Number}|Pool], last_sended = Number})
   end.
