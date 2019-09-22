@@ -2,18 +2,18 @@
 -behaviour(gen_server).
 
 %% API
--export([
-  start_link/1,
-  register/1]).
+-export([start_link/2,
+         register/1
+        ]).
 
 %% gen_server callbacks
--export([
-  init/1,
-  handle_call/3,
-  handle_cast/2,
-  handle_info/2,
-  handle_code_request/3,
-  handle_ping/2]).
+-export([init/1,
+         handle_call/3,
+         handle_cast/2,
+         handle_info/2,
+         handle_code_request/3,
+         handle_ping/2
+        ]).
 
 -include("sip_session_data.hrl").
 -include_lib("kernel/include/inet.hrl").
@@ -22,11 +22,21 @@
 %% API
 %%====================================================================
 
--spec start_link(Number :: binary()) -> {ok, Pid :: pid()}.
-start_link(Number) ->
-  gen_server:start_link(?MODULE, [Number], []).
+-spec start_link(Configuration, Number) -> {ok, pid()} when
+    Configuration :: #{ip_addr   => inet:ip4_address(),
+                       username  => binary(),
+                       password  => binary(),
+                       realm     => binary(),
+                       period_ms => non_neg_integer()
+                      },
+    Number        :: binary().
+start_link(Configuration, Number) ->
+  ChildConfiguration =
+    Configuration#{'@child_configuration' => #{number => Number}
+                  },
+  gen_server:start_link(?MODULE, [ChildConfiguration], []).
 
--spec register(Pid :: pid()) -> ok.
+-spec register(pid()) -> ok.
 register(Pid) ->
   gen_server:cast(Pid, register).
 
@@ -34,37 +44,54 @@ register(Pid) ->
 %% gen_server callbacks
 %%====================================================================
 
--spec init([Number :: binary()]) -> {ok, State :: #data{}}.
-init([Number]) ->
+-spec init(Configuration) -> {ok, State} when
+    Configuration :: #{ip_addr   => inet:ip4_address(),
+                       username  => binary(),
+                       password  => binary(),
+                       realm     => binary(),
+                       period_ms => non_neg_integer(),
+
+                       '@child_configuration' =>
+                         #{number   => binary()
+                          }
+                      },
+    State         :: #data{}.
+init(#{ip_addr   := IpAddr,
+       username  := Username,
+       password  := Password,
+       realm     := Realm,
+       period_ms := PeriodMs,
+
+       '@child_configuration' :=
+         #{number := Number
+          }
+      } = _Configuration) ->
+
   io:format("Call to ~p~n", [Number]),
-  {ok, InterfaceAddr} = application:get_env(sip_client, ip),
-  {ok, Username} = application:get_env(sip_client, username),
-  {ok, Password} = application:get_env(sip_client, password),
-  {ok, Realm} = application:get_env(sip_client, realm),
   <<Rand:8/integer>> = crypto:strong_rand_bytes(1),
   Port = 59000 + Rand,
-  {ok, Socket} = gen_udp:open(Port, [list, inet, {active, true}, {reuseaddr, true}, {ifaddr, InterfaceAddr}]),
+  {ok, Socket} = gen_udp:open(Port, [list, inet, {active, true}, {reuseaddr, true}, {ifaddr, IpAddr}]),
   gen_server:cast(self(), register),
-  {ok, #data{socket = Socket,
-              endpoint_ip     = InterfaceAddr,
-              endpoint_port   = Port,
-              from_tag   = sc_utils:new_tag(),
-              branch     = sc_utils:new_branch(),
-              call_id    = sc_utils:new_callid(),
-              username   = Username,
-              password   = Password,
-              realm      = Realm,
-              c_sec      = sc_utils:new_csec(),
-              number     = Number,
-              post_invite = false
+  {ok, #data{socket        = Socket,
+             endpoint_ip   = IpAddr,
+             endpoint_port = Port,
+             from_tag      = sc_utils:new_tag(),
+             branch        = sc_utils:new_branch(),
+             call_id       = sc_utils:new_callid(),
+             username      = Username,
+             password      = Password,
+             realm         = Realm,
+             period_ms     = PeriodMs,
+             c_sec         = sc_utils:new_csec(),
+             number        = Number,
+             post_invite   = false
   }}.
 
 -spec(handle_cast(Request :: term(), State :: #data{}) ->
   {noreply, NewState :: #data{}}).
-handle_cast(register, State) ->
+handle_cast(register, #data{period_ms = PeriodMs} = State) ->
   {Msg, NewState} = sc_packets_generator:packet(register, State),
-  {ok, Period} = application:get_env(sip_client, period),
-  timer:apply_after(Period*1000, gen_udp, send, [State#data.socket, State#data.realm, 5060, Msg]),
+  timer:apply_after(PeriodMs, gen_udp, send, [State#data.socket, State#data.realm, 5060, Msg]),
   {noreply, NewState}.
 
 

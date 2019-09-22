@@ -21,16 +21,14 @@
 
 -spec all() -> list().
 all() ->
-  [
-    start_link_test,
-    init_test,
-    start_pool_test,
-    handle_call_stub_test,
-    handle_cast_test,
-    start_call_test,
-    handle_info_test,
-    terminated_test,
-    fill_ets_from_file_test
+  [start_link_test,
+   init_test,
+   start_pool_test,
+   handle_call_stub_test,
+   handle_cast_test,
+   handle_info_test,
+   terminated_test,
+   fill_ets_from_file_test
   ].
 
 start_link_test(_Config) ->
@@ -102,27 +100,27 @@ handle_cast_test(_Console) ->
   ?assertEqual({noreply, #state{}}, sc_call_scheduler:handle_cast(msg, #state{})),
   meck:unload(sc_call_scheduler).
 
-start_call_test(_Console) ->
-  process_flag(trap_exit, true),
-  ?assertEqual(#state{}, sc_call_scheduler:start_call(0, #state{})),
-  Self = self(),
-  {ok, SupPid} = sc_line_sup:start_link(),
-  meck:new(sc_line, [passthrough]),
-  meck:expect(sc_line, init, fun([Number]) ->
-                                       Self ! {ok, Number},
-                                       {ok, []}
-                                    end),
-  Tid = ets:new(numbers, [public]),
-  Number = "8800000000",
-  AnotherNumber = "88000000001",
-  ets:insert(Tid, [{Number, number}, {AnotherNumber, number}]),
-  #state{ets_tid = Tid, last_sended = '$end_of_table'} = sc_call_scheduler:start_call(3, #state{ets_tid = Tid, last_sended = undef}),
-  ?assertEqual({ok, list_to_binary(Number)}, receive A -> A end),
-  ?assertEqual({ok, list_to_binary(AnotherNumber)}, receive A -> A end),
-  ets:delete_all_objects(Tid),
-  #state{ets_tid = Tid, last_sended = '$end_of_table'} = sc_call_scheduler:start_call(1, #state{ets_tid = Tid, last_sended = undef}),
-  exit(SupPid, kill),
-  meck:unload(sc_line).
+%%start_call_test(_Console) ->
+%%  process_flag(trap_exit, true),
+%%  ?assertEqual(#state{}, sc_call_scheduler:start_call(0, #state{})),
+%%  Self = self(),
+%%  {ok, SupPid} = sc_line_sup:start_link(),
+%%  meck:new(sc_line, [passthrough]),
+%% meck:expect(sc_line, init, fun([Number]) ->
+%%                                       Self ! {ok, Number},
+%%                                      {ok, []}
+%%                                    end),
+%%  Tid = ets:new(numbers, [public]),
+%%  Number = "8800000000",
+%%  AnotherNumber = "88000000001",
+%%  ets:insert(Tid, [{Number, number}, {AnotherNumber, number}]),
+%%  #state{ets_tid = Tid, last_sended = '$end_of_table'} = sc_call_scheduler:start_call(3, #state{ets_tid = Tid, last_sended = undef}),
+%%  ?assertEqual({ok, list_to_binary(Number)}, receive A -> A end),
+%%  ?assertEqual({ok, list_to_binary(AnotherNumber)}, receive A -> A end),
+%%  ets:delete_all_objects(Tid),
+%%  #state{ets_tid = Tid, last_sended = '$end_of_table'} = sc_call_scheduler:start_call(1, #state{ets_tid = Tid, last_sended = undef}),
+%%  exit(SupPid, kill),
+%%  meck:unload(sc_line).
 
 handle_info_test(_Config) ->
   Self = self(),

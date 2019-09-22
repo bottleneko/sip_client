@@ -1,4 +1,4 @@
--module(sc_packets_generetor_SUITE).
+-module(sc_packets_generator_SUITE).
 
 -compile(export_all).
 -compile(nowarn_export_all).

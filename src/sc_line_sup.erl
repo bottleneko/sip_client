@@ -22,18 +22,19 @@ start_link() ->
 %%% Supervisor callbacks
 %%%===================================================================
 
--spec(init([]) ->
-  {ok, {SupFlags :: supervisor:sup_flags(),
-    [ChildSpec :: supervisor:child_spec()]
-  }}).
-init([]) ->
-  SupFlags = #{strategy => simple_one_for_one, intensity => 1, period => 5},
-  ChildSpecs = [#{id => sc_line,
-                  start => {sc_line, start_link, []},
-                  restart => transient,
-                  shutdown => brutal_kill,
-                  type => worker,
-                  modules => [sc_line]}],
+-spec init(Configuration) -> {ok, SupSpec} when
+    Configuration :: map(),
+    SupSpec       :: {SupFlags, [ChildSpec]},
+    SupFlags      :: supervisor:sup_flags(),
+    ChildSpec     :: supervisor:child_spec().
+init(Configuration) ->
+  SupFlags = #{strategy => simple_one_for_one},
+  ChildSpecs =
+    [#{id       => sc_line,
+       start    => {sc_line, start_link, [Configuration]},
+       restart  => transient,
+       shutdown => brutal_kill
+      }],
   {ok, {SupFlags, ChildSpecs}}.
 
 %%%===================================================================

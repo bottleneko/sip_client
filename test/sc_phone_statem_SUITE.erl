@@ -16,7 +16,6 @@ all() ->
     start_link_test,
     register_line_test,
     match_code_test,
-    init_test,
     terminate_test,
     format_status_test,
     handle_event_test,
@@ -70,50 +69,6 @@ match_code_test(_Config) ->
   ?assertEqual("123", sc_line_statem:match_code(<<"SIP/2.0 123 234 test">>)),
   ?assertMatch({'EXIT', {{"Error matching code in message",<<"SIP/2.0 12">>}, _}},
     catch sc_line_statem:match_code(<<"SIP/2.0 12">>)).
-
-init_test(_Config) ->
-  Self = self(),
-  meck:new(gen_udp, [unstick, passthrough]),
-  meck:expect(gen_udp, open,
-    fun(Port, _OptsList) ->
-      Self ! {ok, Port},
-      {ok, socket}
-    end),
-  meck:new(sc_line_statem, [passthrough]),
-  meck:expect(sc_line_statem, register_line,
-    fun(Pid) ->
-      Self ! {ok, Pid},
-      ok
-    end),
-  {ok, unauthorized, Data} = sc_line_statem:init([#{
-    endpoint_ip   => endpoint_ip,
-    endpoint_port => endpoint_port,
-    host_port     => host_port,
-    real_name     => real_name,
-    username      => username,
-    password      => password,
-    realm         => realm,
-    number        => number,
-    delay         => delay
-  }]),
-  ?assertEqual(socket, Data#data.socket),
-  ?assertEqual(endpoint_ip, Data#data.endpoint_ip),
-  ?assertEqual(endpoint_port, Data#data.endpoint_port),
-  ?assertEqual(host_port, Data#data.host_port),
-  ?assertEqual(real_name, Data#data.real_name),
-  ?assertEqual(username, Data#data.username),
-  ?assertEqual(password, Data#data.password),
-  ?assertEqual(realm, Data#data.realm),
-  ?assertEqual(number, Data#data.number),
-  ?assertEqual(delay, Data#data.delay),
-  ?assertNotEqual(undefined, Data#data.c_sec),
-  ?assertNotEqual(undefined, Data#data.call_id),
-  ?assertNotEqual(undefined, Data#data.branch),
-  ?assertNotEqual(undefined, Data#data.from_tag),
-  ?assertEqual({ok, endpoint_port}, receive A -> A end),
-  {ok, Pid} = receive A -> A end,
-  ?assert(is_pid(Pid)),
-  meck:unload(gen_udp).
 
 terminate_test(_Config) ->
   Self = self(),

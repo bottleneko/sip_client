@@ -11,6 +11,7 @@
   username      :: string(),
   password      :: string(),
   realm         :: string(),
+  period_ms     :: non_neg_integer(),
   c_sec         :: integer(),
   number        :: binary(),
   delay         :: integer(),
