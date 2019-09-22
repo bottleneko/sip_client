@@ -1,4 +1,4 @@
--module(sip_phone_statem).
+-module(sc_phone_statem).
 -behaviour(gen_statem).
 
 -compile(nowarn_missing_spec).
@@ -60,20 +60,20 @@ init([#{endpoint_ip   := InterfaceAddr,
         delay         := Delay
   }]) ->
   {ok, Socket} = gen_udp:open(EndpointPort, [list, inet, {active, true}, {reuseaddr, true}, {ifaddr, InterfaceAddr}]),
-  sip_phone_statem:register_line(self()),
+  sc_phone_statem:register_line(self()),
   {ok, unauthorized, #data{
     socket        = Socket,
     endpoint_ip   = InterfaceAddr,
     endpoint_port = EndpointPort,
     host_port     = HostPort,
-    from_tag      = sip_utils:new_tag(),
-    branch        = sip_utils:new_branch(),
-    call_id       = sip_utils:new_callid(),
+    from_tag      = sc_utils:new_tag(),
+    branch        = sc_utils:new_branch(),
+    call_id       = sc_utils:new_callid(),
     real_name     = RealName,
     username      = Username,
     password      = Password,
     realm         = Realm,
-    c_sec         = sip_utils:new_csec(),
+    c_sec         = sc_utils:new_csec(),
     number        = Number,
     delay         = Delay
   }}.
@@ -104,34 +104,34 @@ callback_mode() ->
 -spec unauthorized(info | cast, {udp, _, _, _, _Recv :: binary()} | register, Data :: #data{}) ->
   {next_state, idle | unauthorized, Data :: #data{}}.
 unauthorized(cast, register, Data) ->
-  {Msg, NewData} = sip_packets_generator:packet(register, Data),
+  {Msg, NewData} = sc_packets_generator:packet(register, Data),
   timer:apply_after(Data#data.delay*1000, gen_udp, send, [Data#data.socket, Data#data.realm, Data#data.host_port, Msg]),
   {next_state, unauthorized, NewData};
 unauthorized(info, {udp, _, _, _, Recv}, Data) ->
-  {Msg, NewData} = sip_packets_generator:packet(register_auth, Recv, Data),
+  {Msg, NewData} = sc_packets_generator:packet(register_auth, Recv, Data),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, Msg),
   {next_state, idle, NewData}.
 
 -spec idle(info, {udp, _, _, _, _Recv :: binary()}, Data :: #data{}) ->
   {next_state, proxy_unauthenticated, Data :: #data{}}.
 idle(info, {udp, _, _, _, _}, Data) ->
-  {Msg, NewData} = sip_packets_generator:packet(invite, Data#data.number, Data),
+  {Msg, NewData} = sc_packets_generator:packet(invite, Data#data.number, Data),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, Msg),
   {next_state, proxy_unauthenticated, NewData}.
 
 -spec proxy_unauthenticated(info, {udp, _, _, _, _Recv :: binary()}, Data :: #data{}) ->
   {next_state, trying, Data :: #data{}}.
 proxy_unauthenticated(info, {udp, _, _, _, Recv}, Data) ->
-  {AckReply, IntermediateData} = sip_packets_generator:packet(ack, Data#data.number, Recv, Data),
+  {AckReply, IntermediateData} = sc_packets_generator:packet(ack, Data#data.number, Recv, Data),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, AckReply),
-  {InviteReply, NewData} = sip_packets_generator:packet(invite_auth, Data#data.number, Recv, IntermediateData),
+  {InviteReply, NewData} = sc_packets_generator:packet(invite_auth, Data#data.number, Recv, IntermediateData),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, InviteReply),
   {next_state, trying, NewData}.
 
 -spec trying(info, {udp, _, _, _, _Recv :: binary()}, Data :: #data{}) ->
   {next_state, session_progress, Data :: #data{}}.
 trying(info, {udp, _, _, _, _Recv}, Data) ->
-  {Reply, NewData} = sip_packets_generator:packet(cancel, Data#data.number, Data),
+  {Reply, NewData} = sc_packets_generator:packet(cancel, Data#data.number, Data),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, Reply),
   {next_state, session_progress, NewData}.
 
@@ -153,9 +153,9 @@ ringing(info, {udp, _, _, _, _Recv}, Data) ->
 -spec cancelling(info, {udp, _, _, _, _Recv :: binary()}, _Data :: #data{}) ->
   {next_state, bye, NewData :: #data{}}.
 cancelling(info, {udp, _, _, _, Recv}, Data) ->
-  {AckReply, IntermediateData} = sip_packets_generator:packet(terminated_ack, Data#data.number, Recv, Data),
+  {AckReply, IntermediateData} = sc_packets_generator:packet(terminated_ack, Data#data.number, Recv, Data),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, AckReply),
-  {InviteReply, NewData} = sip_packets_generator:packet(bye, Data#data.number, Recv, IntermediateData),
+  {InviteReply, NewData} = sc_packets_generator:packet(bye, Data#data.number, Recv, IntermediateData),
   gen_udp:send(Data#data.socket, Data#data.realm, Data#data.host_port, InviteReply),
   {next_state, bye, NewData}.
 

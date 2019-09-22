@@ -18,13 +18,13 @@ start(_StartType, _StartArgs) ->
          end,
   application:set_env(sip_client, ip, Addr),
   sip_client_sup:start_link(),
-  call_scheduler:start_link(),
+  sc_call_scheduler:start_link(),
   {ok, self()}.
 
 %%--------------------------------------------------------------------
 -spec stop(_State :: any) -> any().
 stop(_State) ->
-  supervisor:terminate_child(sip_client_sup, call_scheduler),
+  supervisor:terminate_child(sip_client_sup, sc_call_scheduler),
   exit(erlang:whereis(sip_client_sup), terminate).
 
 %%====================================================================

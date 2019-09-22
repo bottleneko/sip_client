@@ -1,4 +1,4 @@
--module(sip_phone).
+-module(sc_phone).
 -behaviour(gen_server).
 
 %% API
@@ -48,13 +48,13 @@ init([Number]) ->
   {ok, #data{socket = Socket,
               endpoint_ip     = InterfaceAddr,
               endpoint_port   = Port,
-              from_tag   = sip_utils:new_tag(),
-              branch     = sip_utils:new_branch(),
-              call_id    = sip_utils:new_callid(),
+              from_tag   = sc_utils:new_tag(),
+              branch     = sc_utils:new_branch(),
+              call_id    = sc_utils:new_callid(),
               username   = Username,
               password   = Password,
               realm      = Realm,
-              c_sec      = sip_utils:new_csec(),
+              c_sec      = sc_utils:new_csec(),
               number     = Number,
               post_invite = false
   }}.
@@ -62,7 +62,7 @@ init([Number]) ->
 -spec(handle_cast(Request :: term(), State :: #data{}) ->
   {noreply, NewState :: #data{}}).
 handle_cast(register, State) ->
-  {Msg, NewState} = sip_packets_generator:packet(register, State),
+  {Msg, NewState} = sc_packets_generator:packet(register, State),
   {ok, Period} = application:get_env(sip_client, period),
   timer:apply_after(Period*1000, gen_udp, send, [State#data.socket, State#data.realm, 5060, Msg]),
   {noreply, NewState}.
@@ -81,10 +81,10 @@ handle_info({udp, _, _, _, Msg}, State) ->
   RegExp = re:run(Msg, "(?<= )\\d{3}(?= )", [{capture, first, list}]),
   case RegExp of
     {match, [Code]} ->
-      sip_phone:handle_code_request(Code, Msg, State);
+      sc_phone:handle_code_request(Code, Msg, State);
     nomatch ->
       io:format("~p~n~p~n", [?LINE, Msg]),
-      sip_phone:handle_ping(Msg, State)
+      sc_phone:handle_ping(Msg, State)
   end.
 
 %%====================================================================
@@ -95,7 +95,7 @@ handle_info({udp, _, _, _, Msg}, State) ->
 handle_code_request("100", _Msg, State) ->
   {noreply, State};
 handle_code_request("180", _Msg, State = #data{number = Number}) ->
-  {Reply, NewState} = sip_packets_generator:packet(cancel, Number, State),
+  {Reply, NewState} = sc_packets_generator:packet(cancel, Number, State),
   gen_udp:send(State#data.socket, State#data.realm, 5060, Reply),
   {noreply, NewState};
 handle_code_request("183", _Msg, State) ->
@@ -104,7 +104,7 @@ handle_code_request("200", Msg, State = #data{number = Number, post_invite = fal
   {match, [Type]} = re:run(Msg, "(?<=\\d{3} )\\w+",[{capture, first, list}]),
   NewState = case Type of
                "OK" ->
-                 {Reply, RetState} = sip_packets_generator:packet(invite, Number, State#data{call_id=sip_utils:new_callid(), post_invite = true}),
+                 {Reply, RetState} = sc_packets_generator:packet(invite, Number, State#data{call_id=sc_utils:new_callid(), post_invite = true}),
                  gen_udp:send(State#data.socket, State#data.realm, 5060, Reply),
                  RetState;
                _    ->
@@ -112,17 +112,17 @@ handle_code_request("200", Msg, State = #data{number = Number, post_invite = fal
              end,
   {noreply, NewState};
 handle_code_request("401", Msg, State) ->
-  {Reply, NewState} = sip_packets_generator:packet(register_auth, Msg, State),
+  {Reply, NewState} = sc_packets_generator:packet(register_auth, Msg, State),
   gen_udp:send(State#data.socket, State#data.realm, 5060, Reply),
   {noreply, NewState};
 handle_code_request("407", Msg, State = #data{number = Number}) ->
-  {AckReply, IntermediateState} = sip_packets_generator:packet(ack, Number, Msg, State),
+  {AckReply, IntermediateState} = sc_packets_generator:packet(ack, Number, Msg, State),
   gen_udp:send(State#data.socket, State#data.realm, 5060, AckReply),
-  {InviteReply, NewState} = sip_packets_generator:packet(invite_auth, Number, Msg, IntermediateState),
+  {InviteReply, NewState} = sc_packets_generator:packet(invite_auth, Number, Msg, IntermediateState),
   gen_udp:send(State#data.socket, State#data.realm, 5060, InviteReply),
   {noreply, NewState};
 handle_code_request("487", Msg, State = #data{number = Number}) ->
-  {Reply, NewState} = sip_packets_generator:packet(terminated_ack, Number, Msg, State),
+  {Reply, NewState} = sc_packets_generator:packet(terminated_ack, Number, Msg, State),
   gen_udp:send(State#data.socket, State#data.realm, 5060, Reply),
   {stop, normal, NewState};
 handle_code_request("503", _Msg, State) ->

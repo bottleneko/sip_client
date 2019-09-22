@@ -1,4 +1,4 @@
--module(call_scheduler).
+-module(sc_call_scheduler).
 -behaviour(gen_server).
 
 %% API
@@ -14,7 +14,8 @@
 ]).
 
 %% gen_server callbacks
--export([init/1,
+-export([
+  init/1,
   handle_call/3,
   handle_cast/2,
   handle_info/2,
@@ -22,7 +23,7 @@
 
 -define(SERVER, ?MODULE).
 
--include("call_scheduler.hrl").
+-include("sc_call_scheduler.hrl").
 
 %%%===================================================================
 %%% API
@@ -49,7 +50,7 @@ init([]) ->
   %% Prepare source
   {ok, PathToSource} = application:get_env(sip_client, source_path),
   Tid = ets:new(phone_numbers, [private]),
-  call_scheduler:fill_ets_from_file(PathToSource, Tid),
+  sc_call_scheduler:fill_ets_from_file(PathToSource, Tid),
   ets:safe_fixtable(Tid, true),
   %% Completed file
   {ok, PathToCompleted} = application:get_env(sip_client, completed_path),
@@ -68,7 +69,7 @@ handle_call(_Request, _From, State) ->
 -spec(handle_cast(Request :: term(), State :: #state{}) ->
   {noreply, NewState :: #state{}}).
 handle_cast({start_pool, N}, State) ->
-  NewState = call_scheduler:start_call(N, State),
+  NewState = sc_call_scheduler:start_call(N, State),
   {noreply, NewState};
 handle_cast(_Msg, State) ->
   {noreply, State}.
@@ -84,7 +85,7 @@ start_call(N, State = #state{pool = Pool, ets_tid = Tid, last_sended = undef}) -
     '$end_of_table' ->
       start_call(0, State#state{last_sended = '$end_of_table'});
     Number ->
-      {ok, Pid} = supervisor:start_child(sip_line, [list_to_binary(Number)]),
+      {ok, Pid} = supervisor:start_child(sc_line, [list_to_binary(Number)]),
       Ref = erlang:monitor(process, Pid),
       start_call(N -1, State#state{pool = [{Ref, Number}|Pool], last_sended = Number})
   end;
@@ -93,7 +94,7 @@ start_call(N, State = #state{pool = Pool, ets_tid = Tid, last_sended = Last}) ->
     '$end_of_table' ->
       start_call(0, State#state{last_sended = '$end_of_table'});
     Number ->
-      {ok, Pid} = supervisor:start_child(sip_line, [list_to_binary(Number)]),
+      {ok, Pid} = supervisor:start_child(sc_line, [list_to_binary(Number)]),
       Ref = erlang:monitor(process, Pid),
       start_call(N-1, State#state{pool = [{Ref, Number}|Pool], last_sended = Number})
   end.
@@ -116,7 +117,7 @@ handle_info({'DOWN', Ref, process, _Pid, _Reason},  State) ->
       NewPool = State#state.pool
   end,
   %%NewState = timer:apply_after(Period*1000, ?MODULE,  start_call, [1, State#state{pool = NewPool}]),
-  NewState = call_scheduler:start_call(1, State#state{pool = NewPool}),
+  NewState = sc_call_scheduler:start_call(1, State#state{pool = NewPool}),
   {noreply, NewState};
 handle_info(_Req, State) ->
   {noreply, State}.

@@ -1,4 +1,4 @@
--module(sip_utils).
+-module(sc_utils).
 
 %% API
 -export([

@@ -1,4 +1,4 @@
--module(sip_line).
+-module(sc_line).
 -behaviour(supervisor).
 
 %% API
@@ -28,12 +28,12 @@ start_link() ->
   }}).
 init([]) ->
   SupFlags = #{strategy => simple_one_for_one, intensity => 1, period => 5},
-  ChildSpecs = [#{id => sip_phone,
-                  start => {sip_phone, start_link, []},
+  ChildSpecs = [#{id => sc_phone,
+                  start => {sc_phone, start_link, []},
                   restart => transient,
                   shutdown => brutal_kill,
                   type => worker,
-                  modules => [sip_phone]}],
+                  modules => [sc_phone]}],
   {ok, {SupFlags, ChildSpecs}}.
 
 %%%===================================================================

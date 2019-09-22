@@ -27,18 +27,18 @@ start_link() ->
   }}).
 init([]) ->
     SupFlags = #{strategy => one_for_one, intensity => 2, period => 5},
-  ChildSpecs = [#{id => sip_line,
-                  start => {sip_line, start_link, []},
+  ChildSpecs = [#{id => sc_line,
+                  start => {sc_line, start_link, []},
                   restart => permanent,
                   shutdown => brutal_kill,
                   type => supervisor,
-                  modules => [sip_line]},
-                #{id => call_scheduler,
-                  start => {call_scheduler, start_link, []},
+                  modules => [sc_line]},
+                #{id => sc_call_scheduler,
+                  start => {sc_call_scheduler, start_link, []},
                   restart => temporary,
                   shutdown => 5000,
                   type => worker,
-                  modules => [call_scheduler]}],
+                  modules => [sc_call_scheduler]}],
   {ok, {SupFlags, ChildSpecs}}.
 
 %%====================================================================

@@ -1,4 +1,4 @@
--module(sip_packets_generator_SUITE).
+-module(sc_packets_generetor_SUITE).
 
 -compile(export_all).
 -compile(nowarn_export_all).
@@ -48,7 +48,7 @@ all() ->
   ].
 
 packet_register_test(_Config) ->
-  {Packet, _} = sip_packets_generator:packet(register, ?DATA),
+  {Packet, _} = sc_packets_generator:packet(register, ?DATA),
   ?assertEqual( <<"REGISTER sip:example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -71,10 +71,10 @@ packet_register_auth_test(_Config) ->
           "WWW-Authenticate: Digest realm=\"example.com\", nonce=\"testnonce\", qop=\"auth\"\r\n"
           "Server: Zadarma server\r\n"
           "Content-Length: 0\r\n\r\n">>,
-  {Packet, NewState} = sip_packets_generator:packet(register_auth, binary_to_list(Msg), ?DATA),
+  {Packet, NewState} = sc_packets_generator:packet(register_auth, binary_to_list(Msg), ?DATA),
   Nonce = <<"testnonce">>,
   {match, [CNonce]} = re:run(Packet, "(?<=cnonce=\")[^ ]+(?=\")", [{capture, first, list}]),
-  Response = sip_utils:auth_response(?DATA#data.username, ?DATA#data.realm, ?DATA#data.password, "REGISTER", "sip:" ++ ?DATA#data.realm, Nonce, "00000001", CNonce, "auth"),
+  Response = sc_utils:auth_response(?DATA#data.username, ?DATA#data.realm, ?DATA#data.password, "REGISTER", "sip:" ++ ?DATA#data.realm, Nonce, "00000001", CNonce, "auth"),
   ?assertEqual( <<"REGISTER sip:example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -90,7 +90,7 @@ packet_register_auth_test(_Config) ->
   ?assertEqual(?DATA#data.c_sec + 1, NewState#data.c_sec).
 
 packet_invite_test(_Config) ->
-  {Packet, _} = sip_packets_generator:packet(invite, list_to_binary(?DATA#data.number), ?DATA),
+  {Packet, _} = sc_packets_generator:packet(invite, list_to_binary(?DATA#data.number), ?DATA),
   ?assertEqual( <<"INVITE sip:88000000000@example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -105,7 +105,7 @@ packet_invite_test(_Config) ->
                   "Content-Length:  0\r\n\r\n">>, Packet).
 
 packet_cancel_test(_Config) ->
-  {Packet, _} = sip_packets_generator:packet(cancel, list_to_binary(?DATA#data.number), ?DATA),
+  {Packet, _} = sc_packets_generator:packet(cancel, list_to_binary(?DATA#data.number), ?DATA),
   ?assertEqual( <<"CANCEL sip:88000000000@example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -125,7 +125,7 @@ packet_ack_test(_Config) ->
           "Proxy-Authenticate: Digest realm=\"example.com\", nonce=\"testnonce\", qop=\"auth\"\r\n"
           "Server: Zadarma server\r\n"
           "Content-Length: 0\r\n\r\n">>,
-  {Packet, _} = sip_packets_generator:packet(ack, list_to_binary(?DATA#data.number), Msg, ?DATA),
+  {Packet, _} = sc_packets_generator:packet(ack, list_to_binary(?DATA#data.number), Msg, ?DATA),
   ?assertEqual( <<"ACK sip:88000000000@example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -145,7 +145,7 @@ packet_terminated_ack_test(_Config) ->
           "Proxy-Authenticate: Digest realm=\"example.com\", nonce=\"testnonce\", qop=\"auth\"\r\n"
           "Server: Zadarma server"
           "Content-Length: 0\r\n\r\n">>,
-  {Packet, State} = sip_packets_generator:packet(terminated_ack, list_to_binary(?DATA#data.number), Msg, ?DATA),
+  {Packet, State} = sc_packets_generator:packet(terminated_ack, list_to_binary(?DATA#data.number), Msg, ?DATA),
   ?assertEqual( <<"ACK sip:88000000000@example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -166,10 +166,10 @@ packet_invite_auth_test(_Config) ->
           "Proxy-Authenticate: Digest realm=\"example.com\", nonce=\"testnonce\", qop=\"auth\"\r\n"
           "Server: Zadarma server"
           "Content-Length: 0\r\n\r\n">>,
-  {Packet, NewState} = sip_packets_generator:packet(invite_auth, list_to_binary(?DATA#data.number), binary_to_list(Msg), ?DATA),
+  {Packet, NewState} = sc_packets_generator:packet(invite_auth, list_to_binary(?DATA#data.number), binary_to_list(Msg), ?DATA),
   Nonce = <<"testnonce">>,
   {match, [CNonce]} = re:run(Packet, "(?<=cnonce=\")[^ ]+(?=\")", [{capture, first, list}]),
-  Response = sip_utils:auth_response(?DATA#data.username, ?DATA#data.realm, ?DATA#data.password, "INVITE", "sip:88000000000@" ++ ?DATA#data.realm, Nonce, "00000001", CNonce, "auth"),
+  Response = sc_utils:auth_response(?DATA#data.username, ?DATA#data.realm, ?DATA#data.password, "INVITE", "sip:88000000000@" ++ ?DATA#data.realm, Nonce, "00000001", CNonce, "auth"),
   ?assertEqual( <<"INVITE sip:88000000000@example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -195,7 +195,7 @@ packet_bye_test(_Config) ->
           "Proxy-Authenticate: Digest realm=\"example.com\", nonce=\"testnonce\", qop=\"auth\"\r\n"
           "Server: Zadarma server"
           "Content-Length: 0\r\n\r\n">>,
-  {Packet, State} = sip_packets_generator:packet(bye, list_to_binary(?DATA#data.number), Msg, ?DATA),
+  {Packet, State} = sc_packets_generator:packet(bye, list_to_binary(?DATA#data.number), Msg, ?DATA),
   ?assertEqual( <<"BYE sip:88000000000@example.com SIP/2.0\r\n"
                   "Via: SIP/2.0/UDP 127.0.0.1:5060;rport;branch=testbranch\r\n"
                   "Max-Forwards: 70\r\n"
@@ -208,25 +208,25 @@ packet_bye_test(_Config) ->
                   ?assertEqual(?DATA, State).
 
 get_csec_test(_Config) ->
-  ?assertEqual(erlang:integer_to_binary(?DATA#data.c_sec),sip_packets_generator:get_cseq(?DATA)).
+  ?assertEqual(erlang:integer_to_binary(?DATA#data.c_sec),sc_packets_generator:get_cseq(?DATA)).
 
 get_callid_test(_Config) ->
-  ?assertEqual(?DATA#data.call_id, sip_packets_generator:get_callid(?DATA)).
+  ?assertEqual(?DATA#data.call_id, sc_packets_generator:get_callid(?DATA)).
 
 get_from_tag_test(_Config) ->
-  ?assertEqual(?DATA#data.from_tag, sip_packets_generator:get_from_tag(?DATA)).
+  ?assertEqual(?DATA#data.from_tag, sc_packets_generator:get_from_tag(?DATA)).
 
 get_username_test(_Config) ->
-  ?assertEqual(list_to_binary(?DATA#data.username), sip_packets_generator:get_username(?DATA)).
+  ?assertEqual(list_to_binary(?DATA#data.username), sc_packets_generator:get_username(?DATA)).
 
 get_branch_test(_Config) ->
-  ?assertEqual(?DATA#data.branch, sip_packets_generator:get_branch(?DATA)).
+  ?assertEqual(?DATA#data.branch, sc_packets_generator:get_branch(?DATA)).
 
 get_port_test(_Config) ->
-  ?assertEqual(integer_to_binary(?DATA#data.endpoint_port), sip_packets_generator:get_port(?DATA)).
+  ?assertEqual(integer_to_binary(?DATA#data.endpoint_port), sc_packets_generator:get_port(?DATA)).
 
 get_host_test(_Config) ->
-  ?assertEqual(<<"127.0.0.1">>, sip_packets_generator:get_host(?DATA)).
+  ?assertEqual(<<"127.0.0.1">>, sc_packets_generator:get_host(?DATA)).
 
 get_realm_test(_Config) ->
-  ?assertEqual(list_to_binary(?DATA#data.realm), sip_packets_generator:get_realm(?DATA)).
+  ?assertEqual(list_to_binary(?DATA#data.realm), sc_packets_generator:get_realm(?DATA)).

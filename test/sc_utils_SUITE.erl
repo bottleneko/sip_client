@@ -1,4 +1,4 @@
--module(sip_utils_SUITE).
+-module(sc_utils_SUITE).
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("common_test/include/ct.hrl").
@@ -41,61 +41,61 @@ all() ->
   ].
 
 hex_test(_Config) ->
-  MD5 = sip_utils:hex(erlang:binary_to_list(erlang:md5("The quick brown fox jumped over the lazy dog's back"))),
+  MD5 = sc_utils:hex(erlang:binary_to_list(erlang:md5("The quick brown fox jumped over the lazy dog's back"))),
   ?assertEqual("e38ca1d920c4b8b8d3946b2c72f01680", MD5).
 
 parse_to_tag_test(_Config) ->
-  Tag = sip_utils:parse_to_tag(?MESSAGE),
+  Tag = sc_utils:parse_to_tag(?MESSAGE),
   ?assertEqual("5149c1126e702672db415b970eae4141.39b5", Tag).
 
 parse_unauthorized_test(_Config) ->
-  Unauthorized = sip_utils:parse_unauthorized(?MESSAGE),
+  Unauthorized = sc_utils:parse_unauthorized(?MESSAGE),
   ?assertEqual(#{nonce => "Wn6kqVp+o33imPKOmTRBtzQuwrcMxi1N",
                  qop => "auth",
                  realm => "example.com"},
                Unauthorized).
 
 new_cnonce_test(_Config) ->
-  CNonce = sip_utils:new_cnonce(),
+  CNonce = sc_utils:new_cnonce(),
   ?assertEqual(34, erlang:byte_size(CNonce)),
   ?assert(binary:matches(CNonce,[<<"/">>, <<"+">>],[]) =:= []).
 
 unique_new_cnonce_test(_Config) ->
-  ?assertNotEqual(sip_utils:new_cnonce(), sip_utils:new_cnonce()).
+  ?assertNotEqual(sc_utils:new_cnonce(), sc_utils:new_cnonce()).
 
 new_callid_test(_Config) ->
-  CallID = sip_utils:new_callid(),
+  CallID = sc_utils:new_callid(),
   ?assertEqual(32, erlang:byte_size(CallID)),
   ?assert(binary:matches(CallID,[<<"/">>, <<"+">>],[]) =:= []).
 
 unique_new_callid_test(_Config) ->
-  ?assertNotEqual(sip_utils:new_callid(), sip_utils:new_callid()).
+  ?assertNotEqual(sc_utils:new_callid(), sc_utils:new_callid()).
 
 new_branch_test(_Config) ->
-  <<BranchHead:7/binary, BranchTail/binary>> = sip_utils:new_branch(),
+  <<BranchHead:7/binary, BranchTail/binary>> = sc_utils:new_branch(),
   ?assertEqual(<<"z9hG4bK">>, BranchHead),
   ?assertEqual(34, erlang:byte_size(BranchTail)),
   ?assert(binary:matches(BranchTail,[<<"/">>, <<"+">>],[]) =:= []).
 
 unique_new_branch_test(_Config) ->
-  ?assertNotEqual(sip_utils:new_branch(), sip_utils:new_branch()).
+  ?assertNotEqual(sc_utils:new_branch(), sc_utils:new_branch()).
 
 new_tag_test(_Config) ->
-  Tag = sip_utils:new_tag(),
+  Tag = sc_utils:new_tag(),
   ?assertEqual(32, erlang:byte_size(Tag)),
   ?assert(binary:matches(Tag,[<<"/">>, <<"+">>],[]) =:= []).
 
 unique_new_tag_test(_Config) ->
-  ?assertNotEqual(sip_utils:new_tag(), sip_utils:new_tag()).
+  ?assertNotEqual(sc_utils:new_tag(), sc_utils:new_tag()).
 
 %% RFC 3261
 new_csec_test(_Config) ->
-  CSec = sip_utils:new_csec(),
+  CSec = sc_utils:new_csec(),
   ?assert(CSec > 0),
   ?assert(CSec < math:pow(2,31)).
 
 unique_new_csec_test(_Config) ->
-  ?assertNotEqual(sip_utils:new_csec(), sip_utils:new_csec()).
+  ?assertNotEqual(sc_utils:new_csec(), sc_utils:new_csec()).
 
 
 auth_response_test(_Config) ->
@@ -108,21 +108,21 @@ auth_response_test(_Config) ->
   NonceCounter = "1",
   CNonce = "1",
   Qop = "1",
-  HA1 = sip_utils:ha1(Username, Realm, Password),
-  HA2 = sip_utils:ha2(Method, Route),
+  HA1 = sc_utils:ha1(Username, Realm, Password),
+  HA2 = sc_utils:ha2(Method, Route),
   ?assertEqual(md5(lists:flatten(lists:join(":", [HA1, Nonce, NonceCounter, CNonce, Qop, HA2]))),
-    sip_utils:auth_response(Username, Realm, Password, Method, Route, Nonce, NonceCounter, CNonce, Qop)).
+    sc_utils:auth_response(Username, Realm, Password, Method, Route, Nonce, NonceCounter, CNonce, Qop)).
 
 ha1_test(_Config) ->
   Username = "Test",
   Realm = "example.com",
   Password = "test",
-  ?assertEqual(md5(Username ++ [$:] ++ Realm ++ [$:] ++ Password), sip_utils:ha1(Username, Realm, Password)).
+  ?assertEqual(md5(Username ++ [$:] ++ Realm ++ [$:] ++ Password), sc_utils:ha1(Username, Realm, Password)).
 
 ha2_test(_Config) ->
   Method = "TEST",
   Route = "Example",
-  ?assertEqual(md5(Method ++ [$:] ++ Route), sip_utils:ha2(Method, Route)).
+  ?assertEqual(md5(Method ++ [$:] ++ Route), sc_utils:ha2(Method, Route)).
 
 md5(S) ->
   string:to_lower(

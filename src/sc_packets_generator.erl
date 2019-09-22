@@ -1,4 +1,4 @@
--module(sip_packets_generator).
+-module(sc_packets_generator).
 
 -ifdef(TEST).
 -compile(export_all).
@@ -99,10 +99,10 @@ packet(register, Data) ->
   {Packet :: binary(), NewData :: #data{}} when
   Type :: register_auth | invite | cancel.
 packet(register_auth, Msg, Data) ->
-  Tokens = sip_utils:parse_unauthorized(list_to_binary(Msg)),
+  Tokens = sc_utils:parse_unauthorized(list_to_binary(Msg)),
   #{nonce := Nonce} = Tokens,
-  CNonce = sip_utils:new_cnonce(),
-  Response = sip_utils:auth_response(Data#data.username, Data#data.realm, Data#data.password, "REGISTER", "sip:" ++ Data#data.realm, Nonce, "00000001", binary_to_list(CNonce), "auth"),
+  CNonce = sc_utils:new_cnonce(),
+  Response = sc_utils:auth_response(Data#data.username, Data#data.realm, Data#data.password, "REGISTER", "sip:" ++ Data#data.realm, Nonce, "00000001", binary_to_list(CNonce), "auth"),
   Packet =  <<"REGISTER sip:", (get_realm(Data))/binary, " SIP/2.0\r\n"
               "Via: SIP/2.0/UDP ", (get_host(Data))/binary, ":", (get_port(Data))/binary,";rport;branch=", (get_branch(Data))/binary,"\r\n"
               "Max-Forwards: 70\r\n"
@@ -147,7 +147,7 @@ packet(cancel, Number, Data) ->
   {Packet :: binary(), NewData :: #data{}} when
   Type :: ack | terminated_ack | invite_ack | invite_auth.
 packet(ack, Number, Msg, Data) ->
-  ToTag = list_to_binary(sip_utils:parse_to_tag(Msg)),
+  ToTag = list_to_binary(sc_utils:parse_to_tag(Msg)),
   Packet =  <<"ACK sip:", Number/binary,"@", (get_realm(Data))/binary, " SIP/2.0\r\n"
               "Via: SIP/2.0/UDP ", (get_host(Data))/binary,":", (get_port(Data))/binary,";rport;branch=", (get_branch(Data))/binary,"\r\n"
               "Max-Forwards: 70\r\n"
@@ -158,7 +158,7 @@ packet(ack, Number, Msg, Data) ->
               "Content-Length:  0\r\n\r\n">>,
   {Packet, Data};
 packet(terminated_ack, Number, Msg, Data) ->
-  ToTag = list_to_binary(sip_utils:parse_to_tag(Msg)),
+  ToTag = list_to_binary(sc_utils:parse_to_tag(Msg)),
   Packet =  <<"ACK sip:", Number/binary,"@", (get_realm(Data))/binary, " SIP/2.0\r\n"
               "Via: SIP/2.0/UDP ", (get_host(Data))/binary,":", (get_port(Data))/binary,";rport;branch=", (get_branch(Data))/binary,"\r\n"
               "Max-Forwards: 70\r\n"
@@ -169,10 +169,10 @@ packet(terminated_ack, Number, Msg, Data) ->
               "Content-Length:  0\r\n\r\n">>,
   {Packet, Data};
 packet(invite_auth, Number, Msg, Data) ->
-  Tokens = sip_utils:parse_unauthorized(list_to_binary(Msg)),
+  Tokens = sc_utils:parse_unauthorized(list_to_binary(Msg)),
   #{nonce := Nonce} = Tokens,
-  CNonce = sip_utils:new_cnonce(),
-  Response = sip_utils:auth_response(Data#data.username, Data#data.realm, Data#data.password, "INVITE", "sip:" ++ binary_to_list(Number) ++ "@" ++ Data#data.realm, Nonce, "00000001", binary_to_list(CNonce), "auth"),
+  CNonce = sc_utils:new_cnonce(),
+  Response = sc_utils:auth_response(Data#data.username, Data#data.realm, Data#data.password, "INVITE", "sip:" ++ binary_to_list(Number) ++ "@" ++ Data#data.realm, Nonce, "00000001", binary_to_list(CNonce), "auth"),
   Packet =  <<"INVITE sip:", Number/binary,"@", (get_realm(Data))/binary, " SIP/2.0\r\n"
               "Via: SIP/2.0/UDP ", (get_host(Data))/binary,":", (get_port(Data))/binary,";rport;branch=", (get_branch(Data))/binary,"\r\n"
               "Max-Forwards: 70\r\n"
@@ -188,7 +188,7 @@ packet(invite_auth, Number, Msg, Data) ->
               "Content-Length:  0\r\n\r\n">>,
   {Packet, Data};
 packet(bye, Number, Msg, Data) ->
-  ToTag = list_to_binary(sip_utils:parse_to_tag(Msg)),
+  ToTag = list_to_binary(sc_utils:parse_to_tag(Msg)),
   Packet =
     <<"BYE sip:", Number/binary,"@", (get_realm(Data))/binary, " SIP/2.0\r\n"
       "Via: SIP/2.0/UDP ", (get_host(Data))/binary,":", (get_port(Data))/binary,";rport;branch=", (get_branch(Data))/binary,"\r\n"
@@ -200,4 +200,3 @@ packet(bye, Number, Msg, Data) ->
       "Route: <sip:", (get_realm(Data))/binary,";lr;ftag=", (get_from_tag(Data))/binary,";nat=yes>\r\n"
       "Content-Length:  0\r\n\r\n">>,
   {Packet, Data}.
-

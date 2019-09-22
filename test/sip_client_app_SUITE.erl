@@ -24,8 +24,8 @@ choose_interface(_Config) ->
 start_test(_Config) ->
   meck:new(sip_client_sup),
   meck:expect(sip_client_sup, start_link, fun() -> list_to_pid("<0.123.0>") end),
-  meck:new(call_scheduler),
-  meck:expect(call_scheduler, start_link, fun() -> list_to_pid("<0.124.0>") end),
+  meck:new(sc_call_scheduler),
+  meck:expect(sc_call_scheduler, start_link, fun() -> list_to_pid("<0.124.0>") end),
   {ok, Pid} = sip_client_app:start(normal, []),
   ?assert(is_pid(Pid)),
   Ref = erlang:monitor(process, Pid),
@@ -37,26 +37,26 @@ start_test(_Config) ->
               end,
   ?assertEqual(ok, ProcStat),
   meck:unload(sip_client_sup),
-  meck:unload(call_scheduler).
+  meck:unload(sc_call_scheduler).
 
 start_with_ip_test(_Config) ->
   meck:new(sip_client_sup),
   meck:expect(sip_client_sup, start_link, fun() -> list_to_pid("<0.123.0>") end),
-  meck:new(call_scheduler),
-  meck:expect(call_scheduler, start_link, fun() -> list_to_pid("<0.124.0>") end),
+  meck:new(sc_call_scheduler),
+  meck:expect(sc_call_scheduler, start_link, fun() -> list_to_pid("<0.124.0>") end),
   IpAddr = {16,16,16,16},
   application:set_env(sip_client, ip_addr, IpAddr),
   sip_client_app:start(normal, []),
   ?assertEqual(application:get_env(sip_client, ip_addr), {ok, IpAddr}),
   meck:unload(sip_client_sup),
-  meck:unload(call_scheduler).
+  meck:unload(sc_call_scheduler).
 
 start_no_ip_test(_Config) ->
   process_flag(trap_exit, true),
   meck:new(sip_client_sup),
   meck:expect(sip_client_sup, start_link, fun() -> list_to_pid("<0.123.0>") end),
-  meck:new(call_scheduler),
-  meck:expect(call_scheduler, start_link, fun() -> list_to_pid("<0.124.0>") end),
+  meck:new(sc_call_scheduler),
+  meck:expect(sc_call_scheduler, start_link, fun() -> list_to_pid("<0.124.0>") end),
   meck:new(inet, [unstick]),
   meck:expect(inet, getifaddrs, fun() -> {ok, []} end),
   catch application_controller:unset_env(sip_client, ip_addr),
@@ -68,13 +68,13 @@ start_no_ip_test(_Config) ->
   ?assertEqual({ok, 'DOWN'}, Result),
   meck:unload(inet),
   meck:unload(sip_client_sup),
-  meck:unload(call_scheduler).
+  meck:unload(sc_call_scheduler).
 
 
 
 stop_test(_Config) ->
   meck:new(supervisor, [unstick]),
-  meck:expect(supervisor, terminate_child, fun(sip_client_sup, call_scheduler) -> ok end),
+  meck:expect(supervisor, terminate_child, fun(sip_client_sup, sc_call_scheduler) -> ok end),
   Pid = erlang:spawn(?MODULE, mock_sip_client, [self()]),
   erlang:register(sip_client_sup, Pid),
   sip_client_app:stop([]),
