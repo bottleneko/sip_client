@@ -1,4 +1,4 @@
--module(sc_phone_statem_SUITE).
+-module(sc_line_statem_SUITE).
 
 -compile(export_all).
 -compile(nowarn_export_all).
@@ -12,22 +12,21 @@
 
 -spec all() -> list().
 all() ->
-  [
-    start_link_test,
-    register_line_test,
-    match_code_test,
-    terminate_test,
-    format_status_test,
-    handle_event_test,
-    unauthorized_register_test,
-    unauthorized_test,
-    idle_test,
-    proxy_unauthenticated_test,
-    trying_test,
-    session_progress_test,
-    ringing_test,
-    cancelling_test,
-    bye_test
+  [start_link_test,
+   register_line_test,
+   match_code_test,
+   terminate_test,
+   format_status_test,
+   handle_event_test,
+   unauthorized_register_test,
+   unauthorized_test,
+   idle_test,
+   proxy_unauthenticated_test,
+   trying_test,
+   session_progress_test,
+   ringing_test,
+   cancelling_test,
+   bye_test
   ].
 
 start_link_test(_Config) ->

@@ -1,4 +1,4 @@
--module(sc_phone_SUITE).
+-module(sc_line_SUITE).
 
 -compile(export_all).
 -compile(nowarn_export_all).
